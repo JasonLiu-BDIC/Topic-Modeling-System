@@ -8,4 +8,4 @@ Probabilistic topic models:
 2.http://psiexp.ss.uci.edu/research/papers/SteyversGriffithsLSABookFormatted.pdf
 Non-negative matrix factorization: http://www.columbia.edu/%7Ejwp2128/Teaching/E4903/papers/nmf_nature.pdf
 Coherence of Descriptors: http://derekgreene.com/papers/ocallaghan15eswa.pdf
-
+One instance per line: http://mallet.cs.umass.edu/import.php
