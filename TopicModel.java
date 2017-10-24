@@ -32,7 +32,7 @@ public class TopicModel {
 		// Create a model with 100 topics, alpha_t = 0.01, beta_w = 0.01
 		//  Note that the first parameter is passed as the sum over topics, while
 		//  the second is 
-		int numTopics = 100;
+		int numTopics = 20;
 		ParallelTopicModel model = new ParallelTopicModel(numTopics, 1.0, 0.01);
 
 		model.addInstances(instances);
@@ -43,7 +43,7 @@ public class TopicModel {
 
 		// Run the model for 50 iterations and stop (this is for testing only, 
 		//  for real applications, use 1000 to 2000 iterations)
-		model.setNumIterations(50);
+		model.setNumIterations(1000);
 		model.estimate();
 
 		// Show the words and topics in the first instance
