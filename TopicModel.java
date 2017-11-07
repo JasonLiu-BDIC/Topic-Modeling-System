@@ -1,13 +1,11 @@
 package cc.mallet.examples;
 
-import cc.mallet.util.*;
 import cc.mallet.types.*;
 import cc.mallet.pipe.*;
 import cc.mallet.pipe.iterator.*;
 import cc.mallet.topics.*;
 
 import java.util.*;
-import java.util.regex.*;
 import java.io.*;
 
 import java.util.Scanner;
@@ -30,6 +28,7 @@ public class TopicModel {
 		}
 		System.out.println("Enter topic number:");
 		topicNumbers = sc.nextInt();
+		sc.close();
 
 		// Begin by importing documents from text to feature sequences
 		ArrayList<Pipe> pipeList = new ArrayList<Pipe>();
@@ -41,15 +40,8 @@ public class TopicModel {
 		pipeList.add(new TokenSequence2FeatureSequence());
 
 		InstanceList instances = new InstanceList(new SerialPipes(pipeList));
-		try {
 			Reader fileReader = new InputStreamReader(new FileInputStream(new File(fileName)), "UTF-8");
 			instances.addThruPipe(new SelectiveFileLineIterator(fileReader, "^\\s*#.+")); // data,
-																							// label,
-																							// name
-																							// fields
-		} catch (FileNotFoundException e) {
-			System.out.println("File not found");
-		}
 
 		// Create a model with 100 topics, alpha_t = 0.01, beta_w = 0.01
 		// Note that the first parameter is passed as the sum over topics, while
@@ -62,7 +54,7 @@ public class TopicModel {
 		// Use two parallel samplers, which each look at one half the corpus and
 		// combine
 		// statistics after every iteration.
-		model.setNumThreads(4);
+		model.setNumThreads(2);
 
 		// Run the model for 50 iterations and stop (this is for testing only,
 		// for real applications, use 1000 to 2000 iterations)
@@ -82,7 +74,7 @@ public class TopicModel {
 			out.format("%s-%d ", dataAlphabet.lookupObject(tokens.getIndexAtPosition(position)),
 					topics.getIndexAtPosition(position));
 		}
-		System.out.println(out);
+//		System.out.println(out);
 
 		// Estimate the topic distribution of the first instance,
 		// given the current Gibbs state.
@@ -103,7 +95,15 @@ public class TopicModel {
 				out.format("%s (%.0f) ", dataAlphabet.lookupObject(idCountPair.getID()), idCountPair.getWeight());
 				rank++;
 			}
-			System.out.println(out);
+//			System.out.println(out);
+			try {
+	            //Open a file writer, the sencond parameter was set as "true" to append to file
+	            FileWriter writer = new FileWriter("testWrite.txt", true);
+	            writer.write(out.toString() + "\n");
+	            writer.close();
+	        } catch (IOException e) {
+	            e.printStackTrace();
+	        }
 		}
 
 		// Create a new instance with high probability of topic 0
@@ -117,14 +117,7 @@ public class TopicModel {
 			rank++;
 		}
 
-		// Create a new instance named "test instance" with empty target and
-		// source fields.
-		InstanceList testing = new InstanceList(instances.getPipe());
-		testing.addThruPipe(new Instance(topicZeroText.toString(), null, "test instance", null));
 
-		TopicInferencer inferencer = model.getInferencer();
-		double[] testProbabilities = inferencer.getSampledDistribution(testing.get(0), 10, 1, 5);
-		System.out.println("0\t" + testProbabilities[0]);
 	}
 
 }
