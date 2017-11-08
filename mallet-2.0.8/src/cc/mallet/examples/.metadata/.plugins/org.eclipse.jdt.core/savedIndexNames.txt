@@ -1,0 +1,2 @@
+INDEX VERSION 1.129+/Users/jasonliu/mallet-2.0.8/src/cc/mallet/examples/.metadata/.plugins/org.eclipse.jdt.core
+3414066250.index
