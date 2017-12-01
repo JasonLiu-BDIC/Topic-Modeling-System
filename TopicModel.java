@@ -8,24 +8,24 @@ import cc.mallet.topics.*;
 import java.util.*;
 import java.io.*;
 
-import java.util.Scanner;
-
 public class TopicModel {
 
 	public static void main(String[] args) throws Exception {
 		String fileName;
 		int topicNumbers;
 		Scanner sc = new Scanner(System.in);
+		File file;
 		while (true) {
 			System.out.println("Enter the filename for topic modeling:");
 			fileName = sc.nextLine();
-			File file = new File(fileName);
+			file = new File(fileName);
 			if (file.exists()) {
 				break;
 			} else {
 				System.out.println("File not found");
 			}
 		}
+
 		System.out.println("Enter topic number:");
 		topicNumbers = sc.nextInt();
 		sc.close();
@@ -36,12 +36,12 @@ public class TopicModel {
 		// Pipes: lowercase, tokenize, remove stopwords, map to features
 		pipeList.add(new CharSequenceLowercase());
 		pipeList.add(new CharSequence2TokenSequence());
-		pipeList.add(new TokenSequenceRemoveStopwords(new File("stoplist.txt"), "UTF-8", false, false, false));
+		pipeList.add(new TokenSequenceRemoveStopwords(new File("stoplist.txt"), "UTF-8", true, false, true));
 		pipeList.add(new TokenSequence2FeatureSequence());
 
 		InstanceList instances = new InstanceList(new SerialPipes(pipeList));
-			Reader fileReader = new InputStreamReader(new FileInputStream(new File(fileName)), "UTF-8");
-			instances.addThruPipe(new SelectiveFileLineIterator(fileReader, "^\\s*#.+")); // data,
+		Reader fileReader = new InputStreamReader(new FileInputStream(new File(fileName)), "UTF-8");
+		instances.addThruPipe(new SelectiveFileLineIterator(fileReader, "^\\s*#.+")); // data,
 
 		// Create a model with 100 topics, alpha_t = 0.01, beta_w = 0.01
 		// Note that the first parameter is passed as the sum over topics, while
@@ -70,11 +70,14 @@ public class TopicModel {
 		LabelSequence topics = model.getData().get(0).topicSequence;
 
 		Formatter out = new Formatter(new StringBuilder(), Locale.US);
+		Formatter out2 = new Formatter(new StringBuilder(), Locale.US);
+
 		for (int position = 0; position < tokens.getLength(); position++) {
 			out.format("%s-%d ", dataAlphabet.lookupObject(tokens.getIndexAtPosition(position)),
 					topics.getIndexAtPosition(position));
 		}
-//		System.out.println(out);
+
+		// System.out.println(out);
 
 		// Estimate the topic distribution of the first instance,
 		// given the current Gibbs state.
@@ -82,42 +85,68 @@ public class TopicModel {
 
 		// Get an array of sorted sets of word ID/count pairs
 		ArrayList<TreeSet<IDSorter>> topicSortedWords = model.getSortedWords();
+		// Get an array of documents in each Topic
+		ArrayList<TreeSet<IDSorter>> topicDocuments = model.getTopicDocuments(numTopics);
 
 		// Show top 5 words in topics with proportions for the first document
 		for (int topic = 0; topic < numTopics; topic++) {
-			Iterator<IDSorter> iterator = topicSortedWords.get(topic).iterator();
+			Iterator<IDSorter> wordIterator = topicSortedWords.get(topic).iterator();
 
 			out = new Formatter(new StringBuilder(), Locale.US);
+
 			out.format("%d\t%.3f\t", topic, topicDistribution[topic]);
 			int rank = 0;
-			while (iterator.hasNext() && rank < 5) {
-				IDSorter idCountPair = iterator.next();
+			while (wordIterator.hasNext() && rank < 5) {
+				IDSorter idCountPair = wordIterator.next();
 				out.format("%s (%.0f) ", dataAlphabet.lookupObject(idCountPair.getID()), idCountPair.getWeight());
 				rank++;
 			}
-//			System.out.println(out);
-			try {
-	            //Open a file writer, the sencond parameter was set as "true" to append to file
-	            FileWriter writer = new FileWriter("testWrite.txt", true);
-	            writer.write(out.toString() + "\n");
-	            writer.close();
-	        } catch (IOException e) {
-	            e.printStackTrace();
-	        }
-		}
+
+			System.out.println(out);
+//			 try {
+//			 // Open a file writer, the sencond parameter was set as "true"
+//			 // to append to file
+//			File writeFile = new File("testWrite.txt");
+//			 FileWriter writer = new FileWriter("testWrite.txt", true);
+//			 PrintWriter printWriter = new PrintWriter(writeFile);
+//			 model.printTopicDocuments(printWriter);
+//			 writer.close();
+//			 } catch (IOException e) {
+//			 e.printStackTrace();
+//			 }
+//			out.close();
+//
+//		}
 
 		// Create a new instance with high probability of topic 0
-		StringBuilder topicZeroText = new StringBuilder();
-		Iterator<IDSorter> iterator = topicSortedWords.get(0).iterator();
-
-		int rank = 0;
-		while (iterator.hasNext() && rank < 5) {
-			IDSorter idCountPair = iterator.next();
-			topicZeroText.append(dataAlphabet.lookupObject(idCountPair.getID()) + " ");
-			rank++;
-		}
-
+		// StringBuilder topicZeroText = new StringBuilder();
+		// Iterator<IDSorter> iterator = topicSortedWords.get(0).iterator();
+		//
+		// int rank = 0;
+		// while (iterator.hasNext() && rank < 5) {
+		// IDSorter idCountPair = iterator.next();
+		// topicZeroText.append(dataAlphabet.lookupObject(idCountPair.getID()) +
+		// " ");
+		// rank++;
+		// }
 
 	}
+		//trying to print the top 5 documents for each topic 
+		for (int topic = 0; topic < numTopics; topic++) {
+			Iterator<IDSorter> docIterator = topicDocuments.get(topic).iterator();
 
+			out = new Formatter(new StringBuilder(), Locale.US);
+
+			out.format("%d\t%.3f\t", topic, topicDistribution[topic]);
+			int rank = 0;
+			while (docIterator.hasNext() && rank < 5) {
+				IDSorter idCountPair = docIterator.next();
+				out.format("%s (%.0f) ", dataAlphabet.lookupObject(idCountPair.getID()), idCountPair.getWeight());
+				rank++;
+			}
+
+			System.out.println(out);
+			out.close();
+		}
+}
 }
